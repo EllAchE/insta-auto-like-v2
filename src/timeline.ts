@@ -47,6 +47,7 @@ export async function likeTimelinePostsUntilLastLiked(
       }
     }
     simulateHumanity(1000, 3512);
-    anyNewLikes = false;
+    // don't run for a ridiculously long time
+    anyNewLikes = count == 10 ? true : false;
   }
 }
