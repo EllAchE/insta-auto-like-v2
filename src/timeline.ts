@@ -1,89 +1,52 @@
-import { EndCursor, MappedTimelineItem } from './types';
+import {
+  AccountRepositoryLoginResponseLogged_in_user,
+  IgApiClient,
+  TimelineFeed,
+} from 'instagram-private-api';
 import { simulateHumanity } from './utils';
 
-// getHome docs https://github.com/jlobos/instagram-web-api#gethome
-export async function getTimelinePage(ig: any, endCursor?: string) {
-  // if (endCursor) { // may need this
-  //   return ig.getHome(endCursor);
-  // }
-  //return ig.getHome();
-  return ig.getHome(endCursor);
-}
+export async function likeTimelinePostsUntilLastLiked(
+  ig: IgApiClient,
+  auth: AccountRepositoryLoginResponseLogged_in_user
+) {
+  const timeline: TimelineFeed = ig.feed.timeline();
+  let anyNewLikes;
+  let count = 0;
+  while (!anyNewLikes) {
+    console.info(`Fetching page ${count} of run`);
+    count += 1;
 
-export async function getTimelineItems(
-  ig: any,
-  endCursor?: EndCursor
-): Promise<{
-  mappedTimelineItems: MappedTimelineItem[];
-  newEndCursor: EndCursor;
-}> {
-  const timelinePage = await getTimelinePage(ig, endCursor?.end_cursor);
-
-  // Getting the array of items
-  const timelineItems: any[] =
-    timelinePage.data.user.edge_web_feed_timeline.edges;
-  // Needed for pagination
-  const newEndCursor: EndCursor =
-    timelinePage.data.user.edge_web_feed_timeline.page_info;
-
-  const mappedTimelineItems = timelineItems.map((item: any) =>
-    mapTimelineItem(item)
-  );
-
-  return {
-    mappedTimelineItems,
-    newEndCursor,
-  };
-}
-
-function mapTimelineItem(timelineItem: any): MappedTimelineItem {
-  const post = timelineItem.node;
-
-  const { viewer_has_liked, owner, taken_at_timestamp, id } = post;
-
-  return {
-    viewer_has_liked,
-    owner,
-    taken_at_timestamp,
-    id,
-  };
-}
-
-export async function likeTimelinePostsUntilLastLiked(ig: any) {
-  let endCursor: EndCursor | undefined = undefined;
-  let i = 0;
-  // Pagination loads 20 posts, so this fetches 300 total before termination
-
-  simulateHumanity(1000, 4500);
-
-  // exit early if 20 consecutive posts are already liked
-  let consecutiveUnliked = 0;
-
-  while (i < 20 && consecutiveUnliked < 20) {
-    console.log('fetching new page number ' + i + ' of run');
-    //@ts-ignore
-    const { newEndCursor, mappedTimelineItems } = await getTimelineItems(
-      ig,
-      endCursor
-    );
-    endCursor = newEndCursor;
-
-    for (const item of mappedTimelineItems) {
-      if (!item.viewer_has_liked) {
-        consecutiveUnliked = 0;
-        await ig.like({ mediaId: item.id });
-
-        console.log(
-          `liked post from ${item?.owner?.username}, posted at ${item.taken_at_timestamp}`
+    const items = await timeline.items();
+    for (const post of items) {
+      simulateHumanity(1000, 10491);
+      if (
+        !post.has_liked &&
+        !post.ad_action &&
+        !post.ad_id &&
+        !post.ad_metadata &&
+        !post.ad_header_style &&
+        !(post.ad_header_style == 0)
+      ) {
+        console.info(
+          `Liking post from ${post.user.full_name} aka ${post.user.username}`
         );
+        anyNewLikes = true;
+        ig.media.like({
+          mediaId: post.id,
+          moduleInfo: {
+            module_name: 'profile',
+            user_id: auth.pk,
+            username: auth.username,
+          },
+          d: 1,
+        });
       } else {
-        consecutiveUnliked += 1;
+        console.info(
+          `Skipping post from ${post.user.full_name} aka ${post.user.username}. Liked or is ad.`
+        );
       }
-
-      simulateHumanity(1000, 9500);
     }
-
-    // Termination failsafe; can modify this if using it differently
-    i += 1;
+    simulateHumanity(1000, 3512);
+    anyNewLikes = false;
   }
 }
