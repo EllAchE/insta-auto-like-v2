@@ -12,6 +12,7 @@ export async function generateClientAndLogIn(): Promise<{
 }> {
   const { IG_USERNAME, IG_PASSWORD } = process.env;
   if (IG_USERNAME && IG_PASSWORD) {
+    console.info('logging in, expect 4 waiting logs');
     const ig = new IgApiClient();
     simulateHumanity(1000, 4588);
     ig.state.generateDevice(IG_USERNAME);
@@ -21,6 +22,7 @@ export async function generateClientAndLogIn(): Promise<{
     simulateHumanity(1000, 4703);
     const auth = await ig.account.login(IG_USERNAME, IG_PASSWORD);
     simulateHumanity(1000, 4491);
+    console.info('Logged in!');
 
     return { ig, auth };
   } else {
