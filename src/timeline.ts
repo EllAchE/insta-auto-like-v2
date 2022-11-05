@@ -17,7 +17,11 @@ export async function likeTimelinePostsUntilLastLiked(
     count += 1;
 
     const items = await timeline.items();
+    let consecNoLikes = 0;
     for (const post of items) {
+      if (consecNoLikes == 10) {
+        break;
+      }
       simulateHumanity(1000, 10491);
       if (
         !post.has_liked &&
@@ -44,10 +48,12 @@ export async function likeTimelinePostsUntilLastLiked(
         console.info(
           `Skipping post from ${post.user.full_name} aka ${post.user.username}. Liked or is ad.`
         );
+        anyNewLikes = false;
+        consecNoLikes += 1;
       }
     }
     simulateHumanity(1000, 3512);
     // don't run for a ridiculously long time
-    anyNewLikes = count == 10 ? true : false;
+    anyNewLikes = count == 5 || consecNoLikes == 10;
   }
 }
