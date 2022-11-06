@@ -22,7 +22,7 @@ export async function likeTimelinePostsUntilLastLiked(
       if (consecNoLikes == 10) {
         break;
       }
-      simulateHumanity(1000, 10491);
+      simulateHumanity(1000, 6491);
       if (
         !post.has_liked &&
         !post.ad_action &&
